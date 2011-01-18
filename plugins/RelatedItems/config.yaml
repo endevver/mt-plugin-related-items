@@ -1,0 +1,21 @@
+name: Related Items
+id: RelatedItems
+description: Provide an easy, tag-based UI that allows users to see/select entries or assets that are related to the current entry
+version: 0.1
+schema_version: 1
+static_version: 1
+
+customfield_types: $RelatedItems::RelatedItems::Plugin::load_customfield_types
+
+options:
+    fieldsets:
+        display:
+            label: 'Display Options'
+    show_items_count:
+        type: text
+        label: 'Related Items Count'
+        hint: 'How many related items should be shown for entries'
+applications:
+    cms:
+        methods:
+            ri_list_related_items: $RelatedItems::RelatedItems::RelatedItemsField::ri_list_related_items
