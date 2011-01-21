@@ -1,0 +1,13 @@
+.ri_preview fieldset {
+    border: 1px solid #999;
+    padding: 5px;
+}
+
+.ri_preview h2 {
+    font-size: 14px;
+    margin: .2em 0 0.2em;
+}
+
+.ri_preview fieldset li p {
+    margin: 2px 0 2px 10px;
+}
