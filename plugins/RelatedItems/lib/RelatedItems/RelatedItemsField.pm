@@ -13,7 +13,6 @@ sub _options_field {
         my $class = MT->model($key);
         push @classes, $key if $class->isa('MT::Taggable');
     }
-    MT->log( Dumper( \@classes ) );
     my $html = q{<select name="options">};
     for my $c (@classes) {
         $html .= "<option value='$c'>$c</option>";
@@ -27,14 +26,32 @@ sub _options_field {
 
 sub _field_html {
     MT->log('field_html');
-    my $app  = MT->instance;
-    my $blog = $app->blog;
-
+    my $app     = MT->instance;
+    my $blog    = $app->blog;
+    my $blog_id = $blog->id;
     my $html =
+        q{<link rel="stylesheet" href="http://localhost<mt:RelatedItemsStaticWebPath />css/ri_styles.css" />};
+    $html .=
         q{<div class="textarea-wrapper"><input class="full-width" type="text" name="<mt:var name="field_name">" 
        id="<mt:var name="field_id">" value="<mt:Var name="field_value" escape="html">"></div>};
+    $html .= q{<script type="text/javascript">
+var field_name = '<mt:var name="field_name">';
+$(function(){
+    var script = document.createElement( 'script' );
+    script.type = 'text/javascript';
+    script.src = 'http://localhost<mt:RelatedItemsStaticWebPath />js/jquery.cookie-modified.js';
+    $('.ri_preview').append(script);
+});
+};
+    $html .= 'var blog_id = ' . $blog_id . '; </script>';
 
-    $html .= q{<div id="results"></div>};
+    $html .=
+        q{<div class="field-header"><label><input name="ri_show_preview" id="ri_show_preview" type="checkbox" value="show_preview" checked="checked"/> Show preview</label></div>};
+
+    $html .= q{<div class="ri_preview"></div>};
+    $html .= q{
+<script type="text/javascript" src="http://localhost<mt:RelatedItemsStaticWebPath />js/ri_field.js"></script>
+};
     return $html;
 }
 
@@ -55,7 +72,7 @@ sub ri_list_related_items {
     }
 
     return $app->errtrans("Blog_id is required.")
-        unless $app->param('blog_id');
+        unless defined( $app->param('blog_id') );
 
     # what kind of object are we listing?
     return $app->errtrans("Type parameter is required.")
@@ -96,12 +113,12 @@ sub _render {
         or return $app->errtrans('Invalid blog');
 
     my $tag_var = $app->param('tags');
-
+    $tag_var =~ s/,$/ /;
     if ( $tag_var =~ /,/ ) {
         my @tags_input = split( ',', $app->param('tags') );
         $tag_var = join( ' OR ', @tags_input );
     }
-
+    MT->log($tag_var);
     my $plugin     = MT->component("RelatedItems");
     my $blog_prefs = $plugin->get_config_hash("blog:$blog_id");
 
@@ -116,9 +133,9 @@ sub _render {
     $ctx->stash( 'count',         $count ) if defined $count;
 
     my $vars = $ctx->{__stash}{vars} ||= {};
-    $vars->{this_blogid} = $blog_id;
-    $vars->{tags}        = $tag_var;
-    $vars->{count}       = $count;
+    $vars->{blogid} = $blog_id;
+    $vars->{tags}   = $tag_var;
+    $vars->{count}  = $count;
 
     my $tmpl_class = $app->model('template');
     my $tmpl_module = $app->param('tmpl') || $default_type_template;

@@ -3,7 +3,7 @@ id: RelatedItems
 description: Provide an easy, tag-based UI that allows users to see/select entries or assets that are related to the current entry
 version: 0.1
 schema_version: 2
-static_version: 1
+static_version: 8
 
 customfield_types: $RelatedItems::RelatedItems::Plugin::load_customfield_types
 
@@ -26,9 +26,3 @@ default_templates:
     global:module:
         ri_list_related_entry:
             label: "Related Items: Entries"
-        ri_list_related_asset:
-            label: "Related Items: Assets"
-        ri_list_related_pages:
-            label: "Related Items: Pages"
-        ri_list_related_video:
-            label: "Related Items: Videos"
