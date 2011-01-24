@@ -1,3 +1,9 @@
+
+/* 
+timout id:
+we don't want to hit the server on every keystroke so we start a 3/4 sec timer.
+each keystroke resets the timer. if you stop typing for 3/4 sec, it fetches the preview results.
+*/
 var toid;
 
 // load the preview based on the tags entered.
@@ -7,9 +13,7 @@ function get_preview (tags) {
         // normalize the tags value
         var tags = val.split(',').map(function(str){ return $.trim(str)})
         tagsstr = tags.join(',');
-        console.log(tags);
         var ri_url = '/~steve/mt-pro/mt-search.cgi?__mode=ri_list_related_items&tags='+tagsstr+'&type=entry&count=3&blog_id='+blog_id;
-        console.log(ri_url);
         $('.ri_preview').load(ri_url);
         $('.ri_preview').show(0);
     }
@@ -23,12 +27,14 @@ $(function(){
     var show_preview = $.cookie('ri_show_preview');
     $('#ri_show_preview').click(function(){
         show_preview =  $('#ri_show_preview').attr('checked');
-        console.log(show_preview);
         $('.ri_preview').toggle(show_preview);
         $.cookie('ri_show_preview', show_preview);
+
+        if (show_preview) {
+            get_preview($('input[name='+field_name+']').get(0).value);
+        }
     });
     $('input[name='+field_name+']').keyup(function(e){
-        console.log('keyup: ' + e.which);
         if (!show_preview) {
             return;
         }
