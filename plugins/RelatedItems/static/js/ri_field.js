@@ -13,7 +13,9 @@ function get_preview (tags) {
         // normalize the tags value
         var tags = val.split(',').map(function(str){ return $.trim(str)})
         tagsstr = tags.join(',');
-        var ri_url = '/~steve/mt-pro/mt-search.cgi?__mode=ri_list_related_items&tags='+tagsstr+'&type=entry&count=3&blog_id='+blog_id;
+
+        // blog_id and type are set in the page
+        var ri_url = '/~steve/mt-pro/mt-search.cgi?__mode=ri_list_related_items&tags='+tagsstr+'&type='+type+'&count=3&blog_id='+blog_id;
         $('.ri_preview').load(ri_url);
         $('.ri_preview').show(0);
     }

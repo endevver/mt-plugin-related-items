@@ -2,19 +2,16 @@ name: Related Items
 id: RelatedItems
 description: Provide an easy, tag-based UI that allows users to see/select entries or assets that are related to the current entry
 version: 0.1
-schema_version: 2
-static_version: 8
+schema_version: 3
+static_version: 10
 
 customfield_types: $RelatedItems::RelatedItems::Plugin::load_customfield_types
 
-options:
-    fieldsets:
-        display:
-            label: 'Display Options'
-    show_items_count:
-        type: text
-        label: 'Related Items Count'
-        hint: 'How many related items should be shown for entries'
+settings:
+    related_items_count:
+        default: 5
+        scope: blog
+blog_config_template: blog_config.tmpl
 
 applications:
     new_search:
@@ -22,7 +19,11 @@ applications:
             ri_list_related_items: $RelatedItems::RelatedItems::RelatedItemsField::ri_list_related_items
 
 default_templates:
-    base_path: templates
+    base_path: tmpl
     global:module:
         ri_list_related_entry:
             label: "Related Items: Entries"
+
+tags:
+    block:
+        RelatedItems: $RelatedItems::RelatedItems::Tags::related_items_tag

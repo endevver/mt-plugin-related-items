@@ -13,27 +13,31 @@ sub _options_field {
         my $class = MT->model($key);
         push @classes, $key if $class->isa('MT::Taggable');
     }
-    my $html = q{<select name="options">};
+    my $html = q{ <__trans phrase="Relate Items of Type">: <select name="options" id="options">};
     for my $c (@classes) {
-        $html .= "<option value='$c'>$c</option>";
+        $html .= "<option value='$c'<mt:if name='options' eq='$c'> selected='selected'</mt:if>>"
+            . "<__trans phrase='$c'></option>";
     }
     $html .= q{</select>};
-
+    $html .= q{[<mt:Var name="options" escape="html">]};
     $html .= q{<p class="hint">Select what kind of items should be returned to the entry based on the tags.</p>};
 
     return $html;
 }
 
 sub _field_html {
-    MT->log('field_html');
     my $app     = MT->instance;
     my $blog    = $app->blog;
     my $blog_id = $blog->id;
+
+    my $plugin = MT->component('RelatedItems');
+    my $config = $plugin->get_config_hash( 'blog:' . $blog_id );
+    my $count  = $config->{related_items_count};
+
     my $html =
         q{<link rel="stylesheet" href="http://localhost<mt:RelatedItemsStaticWebPath />css/ri_styles.css" />};
-    $html .=
-        q{<div class="textarea-wrapper"><input class="full-width" type="text" name="<mt:var name="field_name">" 
-       id="<mt:var name="field_id">" value="<mt:Var name="field_value" escape="html">"></div>};
+    $html .= q{<div class="ri_tag_div"><input class="" type="text" name="<mt:var name="field_name">" 
+       id="<mt:var name="field_id">" value="<mt:Var name="field_value" escape="html">" size="40"> <label>Show preview <input name="ri_show_preview" id="ri_show_preview" type="checkbox" value="show_preview" checked="checked" /></label></div>};
     $html .= q{<script type="text/javascript">
 var field_name = '<mt:var name="field_name">';
 $(function(){
@@ -43,12 +47,19 @@ $(function(){
     $('.ri_preview').append(script);
 });
 };
-    $html .= 'var blog_id = ' . $blog_id . '; </script>';
 
-    $html .=
-        q{<div class="field-header"><label><input name="ri_show_preview" id="ri_show_preview" type="checkbox" value="show_preview" checked="checked"/> Show preview</label></div>};
+    my $obj_type = 'entry';
 
-    $html .= q{<div class="ri_preview"></div>};
+    $html .= "var blog_id = $blog_id; var type = '$obj_type'; var count = '$count'; </script>";
+    $html .= q{<div class=" field-header "></div>};
+
+    $html .= q{<fieldset>
+<legend>Related Items Preview</legend>
+<h2>Related entries:</h2>
+<div class=" ri_preview ">
+</div>
+</fieldset>
+};
     $html .= q{
 <script type="text/javascript" src="http://localhost<mt:RelatedItemsStaticWebPath />js/ri_field.js"></script>
 };
@@ -68,17 +79,17 @@ sub ri_list_related_items {
 
     if ( $app->param('count') ) {
         $count = $app->param('count');
-        MT->log("count: $count");
+        MT->log(" count : $count ");
     }
 
-    return $app->errtrans("Blog_id is required.")
+    return $app->errtrans(" Blog_id is required . ")
         unless defined( $app->param('blog_id') );
 
     # what kind of object are we listing?
-    return $app->errtrans("Type parameter is required.")
+    return $app->errtrans(" Type parameter is required . ")
         unless $app->param('type');
 
-    return $app->errtrans("Tags parameter is required.")
+    return $app->errtrans(" Tags parameter is required . ")
         unless $app->param('tags');
 
     $out = _render( $app, $count );
@@ -115,12 +126,11 @@ sub _render {
     my $tag_var = $app->param('tags');
     $tag_var =~ s/,$/ /;
     if ( $tag_var =~ /,/ ) {
-        my @tags_input = split( ',', $app->param('tags') );
+        my @tags_input = split( '\s?,\s?', $app->param('tags') );
         $tag_var = join( ' OR ', @tags_input );
     }
-    MT->log($tag_var);
-    my $plugin     = MT->component("RelatedItems");
-    my $blog_prefs = $plugin->get_config_hash("blog:$blog_id");
+    my $plugin = MT->component("RelatedItems");
+    my $config = $plugin->get_config_hash("blog:$blog_id");
 
     my $type                  = $app->param('type');
     my $default_type_template = "ri_list_related_$type";
