@@ -3,7 +3,7 @@ id: RelatedItems
 description: Provide an easy, tag-based UI that allows users to see/select entries or assets that are related to the current entry
 version: 0.1
 schema_version: 3
-static_version: 17
+static_version: 18
 
 customfield_types: $RelatedItems::RelatedItems::Plugin::load_customfield_types
 
