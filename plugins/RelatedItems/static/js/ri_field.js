@@ -5,7 +5,7 @@ each keystroke resets the timer. if you stop typing for 3/4 sec, it fetches the 
 */
 var toids = {};
 
-RIDEBUG=true;
+RIDEBUG=false;
 
 function _debug(msg) {
     if (RIDEBUG) {
