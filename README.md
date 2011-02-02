@@ -6,6 +6,7 @@ For example, a site may want to link a documentation page to blog posts about th
 
 ## Prerequisites
 
+* Movable Type Professional
 * [Config Assitant](https://github.com/openmelody/mt-plugin-configassistant)
 
 ## Installation
