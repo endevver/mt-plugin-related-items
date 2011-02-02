@@ -4,9 +4,10 @@
 <mt:if name="type" eq="entry"><mt:EntryTitle />
 <mt:elseif name="type" eq="page"><mt:PageTitle />
 <mt:else><mt:AssetLabel />
+</mt:if>
 </mt:setvarblock>
 
-<MTApp:Listing type="$type">
+<MTApp:Listing type="$type" hide_pager="1" show_actions="0">
 	<mt:if __first__>
             <thead>
                 <tr>
