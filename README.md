@@ -44,7 +44,7 @@ On the edit entry screen:
 
 ## Template Tags
 
-Realted Items provides on template tag, the block tag **RelatedItems**. This tag creates on object loop of the related items, and provides the normal meta loop variables as well (__first__, __last__, __even__, __odd__, __counter__). The tags has one required argument: *basename*. This should be set to the basename of the field you want to list related items for. Additionally the tag accepts both *blog_id* and *lastn* arguments. Setting *blog_id* will tell the tag to pull related items from a different blog from the one currently in context. Setting *lastn* will limit the returned results to this number. By default, the tag will return the number set in the plugin settings (defaults to 5).
+Related Items provides on template tag, the block tag **RelatedItems**. This tag creates on object loop of the related items, and provides the normal meta loop variables as well (__first__, __last__, __even__, __odd__, __counter__). The tags has one required argument: *basename*. This should be set to the basename of the field you want to list related items for. Additionally the tag accepts both *blog_id* and *lastn* arguments. Setting *blog_id* will tell the tag to pull related items from a different blog from the one currently in context. Setting *lastn* will limit the returned results to this number. By default, the tag will return the number set in the plugin settings (defaults to 5).
 
 ### Example
 
