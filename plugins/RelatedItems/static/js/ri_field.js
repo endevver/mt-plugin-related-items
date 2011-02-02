@@ -14,8 +14,8 @@ function _debug(msg) {
 }
 
 // load the preview based on the tags entered.
-function get_preview (preview_id, type, blog_id, tags) {
-    _debug("get_preview -- getting preview for id: " + preview_id + " type: " + tags + " blog_id: " + blog_id + " tags: " + tags);
+function get_preview (source_type, source_id, field_name, preview_id, type, blog_id, tags) {
+    _debug("get_preview -- getting preview for field: " + field_name + " id: " + preview_id + " type: " + tags + " blog_id: " + blog_id + " tags: " + tags);
             
     if (tags) {
         var val = tags;
@@ -24,7 +24,7 @@ function get_preview (preview_id, type, blog_id, tags) {
         tagsstr = tags.join(',');
 
         // blog_id and type are set in the page
-        var ri_url = '/~steve/mt-pro/mt-search.cgi?__mode=ri_list_related_items&tags='+tagsstr+'&type='+type+'&count=3&blog_id='+blog_id;
+        var ri_url = '/~steve/mt-pro/mt-search.cgi?__mode=ri_list_related_items&_type='+source_type+'&id='+source_id+'&tags='+tagsstr+'&basename='+field_name+'&type='+type+'&count=3&blog_id='+blog_id;
         $(preview_id).load(ri_url, function(){
             $(this).show();
         });
@@ -35,7 +35,7 @@ function show_preview(switch_id){
     return $(switch_id).attr('checked');
 }
 
-function setup_ri_field ( field_name, preview_switch_id, preview_id, type, blog_id ) {
+function setup_ri_field ( source_type, source_id, field_name, preview_switch_id, preview_id, type, blog_id ) {
     _debug("setup_preview_switch -- preview_switch_id: " + preview_switch_id);
     _debug("setup_preview_switch -- field_name: " + field_name);
 
@@ -54,7 +54,7 @@ function setup_ri_field ( field_name, preview_switch_id, preview_id, type, blog_
         if (show_preview(preview_switch_id)) {
             var tags = $('input[name='+field_name+']').get(0).value;
             // _debug("preview switch click -- getting preview for id: " + preview_id + " and tags: " + tags);
-            get_preview(preview_id, type, blog_id, tags);
+            get_preview(source_type, source_id, field_name, preview_id, type, blog_id, tags);
         } else {
             $(preview_id).hide();
             $(preview_id).html('');
@@ -70,7 +70,8 @@ function setup_ri_field ( field_name, preview_switch_id, preview_id, type, blog_
         if (toids[field_name]) {
             clearTimeout(toids[field_name]);
         }
-        toids[field_name] = setTimeout('get_preview(\''+preview_id+'\',\''+type+'\',\''+blog_id+'\', \''+this.value+'\')', 750);
+		var args = [source_type, source_id, field_name, preview_id, type, blog_id, this.value];
+        toids[field_name] = setTimeout('get_preview(\''+args.join('\',\'')+'\')', 750);
     });
 }
 

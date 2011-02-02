@@ -5,6 +5,6 @@ use Test::More tests => 4;
 
 ok( MT->component('relateditems'), "RelatedItems loaded" );
 
-require_ok('RelatedItems::Plugin');
+# require_ok('RelatedItems::Plugin');
 require_ok('RelatedItems::RelatedItemsField');
-require_ok('RelatedItems::Tags');
+# require_ok('RelatedItems::Tags');

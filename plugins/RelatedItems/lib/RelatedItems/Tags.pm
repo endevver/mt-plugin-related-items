@@ -5,7 +5,6 @@ use warnings;
 use Data::Dumper;
 
 use RelatedItems::RelatedItemsField;
-use RelatedItems::Plugin qw(get_object_types);
 
 # RelatedItems tag
 #
@@ -28,12 +27,19 @@ sub related_items_tag {
     my $plugin = MT->component('RelatedItems');
     my $config = $plugin->get_config_hash("blog:$blog_id");
 
-    my $cf_basename = $args->{basename};
+    my $cf_basename   = $args->{basename};
+    my $real_basename = $cf_basename;
+
+    $real_basename =~ s/customfield_//;
+
     if ( !$cf_basename ) {
         return $ctx->error(
             'The RelatedItems block tag requires the basename argument. The basename should be the Related Items custom field basename.'
         );
     }
+
+    MT->log("related_items_tag: cf_basename: $cf_basename");
+    MT->log("related_items_tag: real_basename: $real_basename");
 
     # get count from args, or blog plugin setting (defaults to 5)
     my $count = $args->{lastn};
@@ -50,11 +56,13 @@ sub related_items_tag {
     # must be unique so it's a good thing to key off of!
     my $field = CustomFields::Field->load(
         {   type     => 'related_items_tags',
-            basename => $cf_basename,
+            basename => $real_basename,
         }
     );
 
-    if ( !$field ) { return $ctx->error('A Related Items Custom Field with this basename could not be found.'); }
+    if ( !$field ) {
+        return $ctx->error("A Related Items Custom Field with this basename ($real_basename) could not be found.");
+    }
 
     my $basename = 'field.' . $field->basename;
     my $obj_type = $field->obj_type;
@@ -63,6 +71,8 @@ sub related_items_tag {
     my $object;
     if ( $obj_type eq 'entry' ) {
         $object = MT::Entry->load( { id => $ctx->stash('entry')->id, } );
+        MT->log("related_items_tag: i got here");
+
     }
     elsif ( $obj_type eq 'page' ) {
 
@@ -118,6 +128,9 @@ sub related_items_tag {
     $args{'lastn'} = $count;
     my @items = $class->load( \%terms, \%args );
 
+	$vars->{object_loop} = \@items;
+	$vars->{hide_pager} = 1;
+	
     $vars->{num_results} = $num_items;
 
     my $i = 0;

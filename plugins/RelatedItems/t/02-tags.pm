@@ -12,14 +12,13 @@ use CustomFields::Field;
 
 use RelatedItems::Tags;
 use RelatedItems::RelatedItemsField;
-use RelatedItems::Plugin qw(get_object_types);
 
 require MT::Template;
 require MT::Template::Context;
 
 my $ttypes = MT->registry('object_types');
 
-my @tclasses = RelatedItems::Plugin::get_object_types();
+my @tclasses = RelatedItems::RelatedItemsField::get_object_types();
 
 my $tag = 'atag';
 

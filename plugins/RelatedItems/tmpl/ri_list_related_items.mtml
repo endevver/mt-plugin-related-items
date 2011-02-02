@@ -1,20 +1,26 @@
-<ul>
-<mt:if name="type" eq="entry">
-<mt:entries tags='$tags'>
-<li>
-<h3 style='display:inline; border: none;'><mt:EntryTitle /></h3> <mt:EntryBody words="10" />...
-</li>
-</mt:entries>
-<mt:elseif name="type" eq="page">
-<mt:pages tags='$tags'>
-<li><h3 style='display:inline; border: none;'><mt:PageTitle /></h3> <mt:PageBody words="10" />...
-</li>
-</mt:pages>
-<mt:elseif name="type" eq="asset">
-<mt:assets tags='$tags'>
-<li>
-<$mt:AssetThumbnailURL width="50" square="1"$> <h3 style='display:inline; border: none;'><mt:AssetLabel /></h3>
-</li>
-</mt:assets>
+<mt:RelatedItems basename="$basename" lastn="$count">
+
+<mt:setvarblock name="name">
+<mt:if name="type" eq="entry"><mt:EntryTitle />
+<mt:elseif name="type" eq="page"><mt:PageTitle />
+<mt:else><mt:AssetLabel />
+</mt:setvarblock>
+
+<MTApp:Listing type="$type">
+	<mt:if __first__>
+            <thead>
+                <tr>
+                    <th id="cf-name"><__trans phrase="Name"></th>
+                </tr>
+            </thead>
+            <tbody>
+    </mt:if>
+	<tr class="<mt:if name="__odd__">odd<mt:else>even</mt:if>">
+        <td><a href="<mt:var name="script_url">?__mode=view&amp;_type=field&amp;blog_id=<mt:var name="blog_id">&amp;id=<mt:var name="id">"><mt:var name="name"></a></td>
+    </tr>
+<mt:if __last__>
+</tbody>
 </mt:if>
-</ul>
+</MTApp:Listing>
+
+</mt:RelatedItems>

@@ -4,11 +4,9 @@ use strict;
 use warnings;
 use Data::Dumper;
 
-use RelatedItems::Plugin;
-
 sub _options_field {
 
-    my @classes = RelatedItems::Plugin::get_object_types();
+    my @classes = get_object_types();
 
     my $html = q{ <__trans phrase="Relate Items of Type">: <select name="options" id="options">};
     for my $c (@classes) {
@@ -16,7 +14,6 @@ sub _options_field {
             . "<__trans phrase='$c'></option>";
     }
     $html .= q{</select>};
-    $html .= q{[<mt:Var name="options" escape="html">]};
     $html .= q{<p class="hint">Select what kind of items should be returned to the entry based on the tags.</p>};
 
     return $html;
@@ -27,16 +24,21 @@ sub _field_html {
     my $blog    = $app->blog;
     my $blog_id = $blog->id;
 
+    my $source_type = $app->param('_type');
+    my $source_id   = $app->param('id');
+
     my $plugin = MT->component('RelatedItems');
     my $config = $plugin->get_config_hash( 'blog:' . $blog_id );
     my $count  = $config->{related_items_count};
 
-    my $html =
-        q{<link rel="stylesheet" href="http://localhost<mt:RelatedItemsStaticWebPath />css/ri_styles.css" />};
-    $html .= q{<div class="ri_tag_div"><input class="" type="text" name="<mt:var name="field_name">" 
-       id="<mt:var name="field_id">" value="<mt:Var name="field_value" escape="html">" size="40"> <label>Show preview <input name="ri_<mt:var name="field_name">_show_preview" id="ri_<mt:var name="field_name">_show_preview" type="checkbox" value="show_preview" checked="checked" /></label></div>};
-    $html .= q{<script type="text/javascript">
-$(function(){
+    my $html = <<"HTML";
+<link rel="stylesheet" href="<mt:PluginStaticWebPath component="relateditems">css/ri_styles.css" />
+<div class="ri_tag_div"><input class="" type="text" name="<mt:var name="field_name">" 
+       id="<mt:var name="field_id">" value="<mt:Var name="field_value" escape="html">" size="40"> <label>Show preview <input name="ri_<mt:var name="field_name">_show_preview" id="ri_<mt:var name="field_name">_show_preview" type="checkbox" value="show_preview" checked="checked" /></label></div>
+<script type="text/javascript">
+\$(function(){
+	var source_type = "$source_type";
+	var source_id = "$source_id";
     var field_name = '<mt:var name="field_name">';
     var preview_switch_id = '#ri_' + field_name + '_show_preview';
     var preview_id = '#ri_' + field_name + '_preview';
@@ -44,26 +46,24 @@ $(function(){
     var blog_id='<mt:var name="blog_id" />';
 
     if (typeof(RI_SCRIPT_LOADED) == "undefined" ) {
-        $.getScript("<mt:RelatedItemsStaticWebPath />js/ri_field.js", function(){
-            setup_ri_field ( field_name, preview_switch_id, preview_id, type, blog_id );
+        \$.getScript("<mt:PluginStaticWebPath component="relateditems">js/ri_field.js", function(){
+            setup_ri_field ( source_type, source_id, field_name, preview_switch_id, preview_id, type, blog_id );
         });
     } else {
-        setup_ri_field ( field_name, preview_switch_id, preview_id, type, blog_id);
+        setup_ri_field ( source_type, source_id, field_name, preview_switch_id, preview_id, type, blog_id);
     }
 });
-};
-
-    $html .=
-        "var blog_id = $blog_id; var <mt:var name='field_name'>_type = '<mt:var name='options' />'; var count = '$count'; </script>";
-    $html .= q{<div class="field-header"></div>};
-
-    $html .= q{<fieldset>
-<legend>Related Items Preview</legend>
-<h2>Related <mt:var name="options"> items:</h2>
+var blog_id = $blog_id; 
+var <mt:var name='field_name'>_type = '<mt:var name='options' />';
+var count = '$count';
+</script>
+<fieldset id="">
+<legend>Preview</legend>
 <div id="ri_<mt:var name="field_id" />_preview">
 </div>
 </fieldset>
-};
+HTML
+
     return $html;
 }
 
@@ -80,18 +80,20 @@ sub ri_list_related_items {
 
     if ( $app->param('count') ) {
         $count = $app->param('count');
-        MT->log(" count : $count ");
     }
 
-    return $app->errtrans(" Blog_id is required . ")
+    return $app->errtrans("Blog_id is required.")
         unless defined( $app->param('blog_id') );
 
     # what kind of object are we listing?
-    return $app->errtrans(" Type parameter is required . ")
+    return $app->errtrans("Type parameter is required.")
         unless $app->param('type');
 
-    return $app->errtrans(" Tags parameter is required . ")
+    return $app->errtrans("Tags parameter is required.")
         unless $app->param('tags');
+
+    return $app->errtrans("Basename parameter is required.")
+        unless $app->param('basename');
 
     $out = _render( $app, $count );
     return unless $out;
@@ -124,6 +126,13 @@ sub _render {
     my $blog = $app->model('blog')->load($blog_id)
         or return $app->errtrans('Invalid blog');
 
+    my $source_type = $app->param('_type')
+        or return $app->errtrans('No _type.');
+    my $source_id = $app->param('id')
+        or return $app->errtrans('No id.');
+
+    my $basename = $app->param('basename');
+
     my $tag_var = $app->param('tags');
     $tag_var =~ s/,$/ /;
     if ( $tag_var =~ /,/ ) {
@@ -141,13 +150,20 @@ sub _render {
     $ctx->stash( 'blog',          $blog );
     $ctx->stash( 'blog_id',       $blog_id );
     $ctx->stash( 'local_blog_id', $blog_id );
-    $ctx->stash( 'count',         $count ) if defined $count;
+
+    my $item = MT->model($source_type)->load($source_id)
+        or return $app->errtrans("Couldn't load $source_type with id $source_id");
+    $ctx->stash( $source_type, $item );
+
+    $ctx->stash( 'count', $count ) if defined $count;
 
     my $vars = $ctx->{__stash}{vars} ||= {};
-    $vars->{blogid} = $blog_id;
-    $vars->{tags}   = $tag_var;
-    $vars->{count}  = $count;
-    $vars->{type}   = $type;
+	
+    $vars->{blogid}   = $blog_id;
+    $vars->{basename} = $basename;
+    $vars->{tags}     = $tag_var;
+    $vars->{count}    = $count;
+    $vars->{type}     = $type;
 
     my $tmpl_class = $app->model('template');
 
@@ -158,6 +174,17 @@ sub _render {
     $tmpl->context($ctx);
 
     return $tmpl;
+}
+
+sub get_object_types {
+    my $types = MT->registry('object_types');
+    my @classes;
+    foreach my $key ( keys %$types ) {
+        next if $key =~ /(\w+\.\w+)|^file$|^(as|profileevent)$/;
+        my $class = MT->model($key);
+        push @classes, $key if $class->isa('MT::Taggable');
+    }
+    return @classes;
 }
 
 1;
