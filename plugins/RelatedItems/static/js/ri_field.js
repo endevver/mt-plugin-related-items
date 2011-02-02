@@ -24,9 +24,10 @@ function get_preview (source_type, source_id, field_name, preview_id, type, blog
         tagsstr = tags.join(',');
 
         // blog_id and type are set in the page
-        var ri_url = '/~steve/mt-pro/mt-search.cgi?__mode=ri_list_related_items&_type='+source_type+'&id='+source_id+'&tags='+tagsstr+'&basename='+field_name+'&type='+type+'&count=3&blog_id='+blog_id;
-        $(preview_id).load(ri_url, function(){
-            $(this).show();
+        var ri_url = '/~steve/mt-pro/mt.cgi?__mode=ri_list_related_items&_type='+source_type+'&id='+source_id+'&tags='+tagsstr+'&basename='+field_name+'&type='+type+'&count=3&blog_id='+blog_id;
+        $(preview_id + " .preview_pane").load(ri_url, function(){
+			console.log('loaded, showing ' + preview_id);
+            $(preview_id).show();
         });
     }
 }
@@ -51,13 +52,13 @@ function setup_ri_field ( source_type, source_id, field_name, preview_switch_id,
         _show_preview =  show_preview(preview_switch_id);
         _debug("preview switch click -- show_preview: " + _show_preview);
 
-        if (show_preview(preview_switch_id)) {
+        if (_show_preview) {
             var tags = $('input[name='+field_name+']').get(0).value;
             // _debug("preview switch click -- getting preview for id: " + preview_id + " and tags: " + tags);
             get_preview(source_type, source_id, field_name, preview_id, type, blog_id, tags);
         } else {
             $(preview_id).hide();
-            $(preview_id).html('');
+            $(preview_id + ' .preview_pane').html('');
         }
     });
     _debug("setup auto complete -- field_name: " + field_name);

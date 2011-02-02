@@ -71,8 +71,6 @@ sub related_items_tag {
     my $object;
     if ( $obj_type eq 'entry' ) {
         $object = MT::Entry->load( { id => $ctx->stash('entry')->id, } );
-        MT->log("related_items_tag: i got here");
-
     }
     elsif ( $obj_type eq 'page' ) {
 
@@ -146,7 +144,6 @@ sub related_items_tag {
 
         my $out = $builder->build( $ctx, $tokens );
         if ( !defined $out ) {
-
             # A error--perhaps a tag used out of context. Report it.
             return $ctx->error( $builder->errstr );
         }

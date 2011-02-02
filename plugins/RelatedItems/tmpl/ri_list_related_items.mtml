@@ -1,27 +1,20 @@
-<mt:RelatedItems basename="$basename" lastn="$count">
-
-<mt:setvarblock name="name">
-<mt:if name="type" eq="entry"><mt:EntryTitle />
-<mt:elseif name="type" eq="page"><mt:PageTitle />
-<mt:else><mt:AssetLabel />
-</mt:if>
-</mt:setvarblock>
-
 <MTApp:Listing type="$type" hide_pager="1" show_actions="0">
 	<mt:if __first__>
             <thead>
                 <tr>
                     <th id="cf-name"><__trans phrase="Name"></th>
+                    <th id="cf-name"><__trans phrase="Type"></th>
+					<th id="cf-name"><__trans phrase="Published"></th>
                 </tr>
             </thead>
             <tbody>
     </mt:if>
 	<tr class="<mt:if name="__odd__">odd<mt:else>even</mt:if>">
-        <td><a href="<mt:var name="script_url">?__mode=view&amp;_type=field&amp;blog_id=<mt:var name="blog_id">&amp;id=<mt:var name="id">"><mt:var name="name"></a></td>
+        <td><a href="<mt:var name="script_url">?__mode=view&amp;_type=<mt:var name="type">&amp;blog_id=<mt:var name="blog_id">&amp;id=<mt:var name="id">"><mt:var name="name"></a></td>
+        <td><mt:var name="type" /></td>
+        <td><mt:date ts="$modified_on" /></td>
     </tr>
 <mt:if __last__>
 </tbody>
 </mt:if>
 </MTApp:Listing>
-
-</mt:RelatedItems>

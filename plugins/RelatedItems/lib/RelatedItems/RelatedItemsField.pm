@@ -57,10 +57,9 @@ var blog_id = $blog_id;
 var <mt:var name='field_name'>_type = '<mt:var name='options' />';
 var count = '$count';
 </script>
-<fieldset id="">
+<fieldset id="ri_<mt:var name="field_id" />_preview">
 <legend>Preview</legend>
-<div id="ri_<mt:var name="field_id" />_preview">
-</div>
+<div class="preview_pane"></div>
 </fieldset>
 HTML
 
@@ -69,15 +68,12 @@ HTML
 
 sub ri_list_related_items {
     my $app = shift;
-    return $app->errtrans('This module works with MT::App::Search.')
-        unless $app->isa('MT::App::Search');
 
-    my ( $count, $out ) = $app->check_cache();
-    if ( defined $out ) {
-        $app->run_callbacks( 'search_cache_hit', $count, $out );
-        return $out;
-    }
+    my $terms = {};
+    my $args  = {};
 
+	my $count;
+	
     if ( $app->param('count') ) {
         $count = $app->param('count');
     }
@@ -95,26 +91,81 @@ sub ri_list_related_items {
     return $app->errtrans("Basename parameter is required.")
         unless $app->param('basename');
 
-    $out = _render( $app, $count );
-    return unless $out;
+    my $blog_id = $app->param('blog_id');
+    $blog_id =~ s/\D//g;
+    my $blog = $app->model('blog')->load($blog_id)
+        or return $app->errtrans('Invalid blog');
+	
+	$terms->{'blog_id'} = $blog_id;
+	
+    my $source_type = $app->param('_type')
+        or return $app->errtrans('No _type.');
+    my $source_id = $app->param('id')
+        or return $app->errtrans('No id.');
 
-    my $result;
-    if ( ref($out) && ( $out->isa('MT::Template') ) ) {
-        defined( $result = $out->build() )
-            or return $app->error( $out->errstr );
+
+	my $basename = $app->param('basename');
+
+    my $plugin = MT->component("RelatedItems");
+    my $config = $plugin->get_config_hash("blog:$blog_id");
+
+    my $type          = $app->param('type');
+    my $type_template = "ri_list_related_items.mtml";
+
+	my $ds   = MT->model($type)->datasource;
+
+    require MT::Tag;
+    require MT::ObjectTag;
+
+    my $tag_var = $app->param('tags');
+    $tag_var =~ s/,$/ /;
+    my @tag_names = $tag_var =~ /,/ ? split( '\s?,\s?', $tag_var ) : ($tag_var);
+
+    my %tags = map { $_ => 1, MT::Tag->normalize($_) => 1 } @tag_names;
+    my @tags = MT::Tag->load( { name => [ keys %tags ] } );
+    my @tag_ids;
+    foreach (@tags) {
+        push @tag_ids, $_->id;
+        my @more = MT::Tag->load( { n8d_id => $_->n8d_id ? $_->n8d_id : $_->id } );
+        push @tag_ids, $_->id foreach @more;
     }
-    else {
-        $result = $out;
-    }
+    @tag_ids = (0) unless @tags;
 
-    $count = $out->context()->stash('number_of_events');
-
-    $app->run_callbacks( 'search_post_render', $app, $count, $result );
-
-    my $cache_driver = $app->{cache_driver};
-    $cache_driver->set( $app->{cache_keys}{count}, $count, $app->config->SearchCacheTTL );
-
-    $result;
+	$args->{'join'} = [ 
+		'MT::ObjectTag', 
+		'object_id', 
+		{ tag_id => \@tag_ids, object_datasource => $ds }, 
+		{ unique => 1 }
+	];
+	
+	my $hasher = sub {
+        my ( $obj, $row ) = @_;
+		MT->log(Dumper($row));
+		if ($row->{class} =~ /entry|page/) {
+			$row->{name} = $row->{title};
+		} else {
+			$row->{name} = $row->{label};
+		}
+        $row->{label} = $row->{name};
+    };
+    
+	return $app->listing(
+		{
+			type => $type,
+			template => $plugin->load_tmpl($type_template),
+			terms => $terms,
+			args => $args,
+			code => $hasher,
+			params => {
+				basename => $basename,
+				blogid => $blog_id,
+			    basename => $basename,
+			    tags     => $tag_var,
+			    count    => $count,
+			    type     => $type,
+			}
+		}
+	);
 }
 
 sub _render {

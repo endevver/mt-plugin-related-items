@@ -14,7 +14,7 @@ settings:
 blog_config_template: blog_config.tmpl
 
 applications:
-    new_search:
+    cms:
         methods:
             ri_list_related_items: $RelatedItems::RelatedItems::RelatedItemsField::ri_list_related_items
 
