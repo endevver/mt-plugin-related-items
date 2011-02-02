@@ -5,7 +5,15 @@ use warnings;
 use Data::Dumper;
 
 use RelatedItems::RelatedItemsField;
+use RelatedItems::Plugin qw(get_object_types);
 
+# RelatedItems tag
+#
+# <mt:RelatedItems
+#     basename='some_field_name'
+#     [lastn='5']
+# >
+#
 sub related_items_tag {
     my ( $ctx, $args, $cond ) = @_;
     my $builder = $ctx->stash('builder');
@@ -38,8 +46,6 @@ sub related_items_tag {
         $blog_id = $args->{blog_id};
     }
 
-    # my $class = $app->param('type');
-
     # Grab the field name with the collected data from above. The basename
     # must be unique so it's a good thing to key off of!
     my $field = CustomFields::Field->load(
@@ -47,7 +53,6 @@ sub related_items_tag {
             basename => $cf_basename,
         }
     );
-    MT->log( Dumper($field) );
 
     if ( !$field ) { return $ctx->error('A Related Items Custom Field with this basename could not be found.'); }
 
@@ -56,31 +61,86 @@ sub related_items_tag {
 
     # Grab the correct object, based on the object type from the custom field.
     my $object;
-    if ( $obj_type == 'entry' ) {
+    if ( $obj_type eq 'entry' ) {
         $object = MT::Entry->load( { id => $ctx->stash('entry')->id, } );
     }
-    elsif ( $obj_type == 'page' ) {
+    elsif ( $obj_type eq 'page' ) {
 
         # Entries and Pages are both stored in the mt_entry table
         $object = MT::Entry->load( { id => $ctx->stash('page')->id, } );
     }
-    elsif ( $obj_type == 'category' ) {
+    elsif ( $obj_type eq 'category' ) {
         $object = MT::Category->load( { id => $ctx->stash('category')->id, } );
     }
-    elsif ( $obj_type == 'folder' ) {
+    elsif ( $obj_type eq 'folder' ) {
 
         # Categories and Folders are both stored in the mt_category table
         $object = MT::Category->load( { id => $ctx->stash('category')->id, } );
     }
-    elsif ( $obj_type == 'author' ) {
+    elsif ( $obj_type eq 'author' ) {
         $object = MT::Author->load( { id => $ctx->stash('author')->id, } );
     }
 
-    # $object0->$basename gets the value of the custom field for the object
+    # what kind of items are being related?
+    my $type = $field->options;                # entry || asset || file || photo || image || video || whatever
+    my $ds   = MT->model($type)->datasource;
+
+    # $ds = $type =~ /file|image|video|photo/ ? 'asset' : $type;
+    # print "setting ds to $ds for $type\n";
+
+    my $class = MT->model($type);
+
+    my %terms = ( 'blog_id' => $blog_id, );
+    my %args  = ( 'desc'    => 'DESC' );
+
+    # $object->$basename gets the value of the custom field for the object
     # in our case, the tags to use to calculate related items
     my $tags = $object->$basename;
-    my @tags = split( /\s?,\s?/, $object->$basename );
+    my @tag_names = split( /\s?,\s?/, $object->$basename );
 
+    require MT::Tag;
+    require MT::ObjectTag;
+
+    my %tags = map { $_ => 1, MT::Tag->normalize($_) => 1 } @tag_names;
+    my @tags = MT::Tag->load( { name => [ keys %tags ] } );
+    my @tag_ids;
+    foreach (@tags) {
+        push @tag_ids, $_->id;
+        my @more = MT::Tag->load( { n8d_id => $_->n8d_id ? $_->n8d_id : $_->id } );
+        push @tag_ids, $_->id foreach @more;
+    }
+    @tag_ids = (0) unless @tags;
+    $args{'join'} =
+        [ 'MT::ObjectTag', 'object_id', { tag_id => \@tag_ids, object_datasource => $ds }, { unique => 1 } ];
+
+    my $num_items = $class->count( \%terms, \%args );
+
+    $args{'lastn'} = $count;
+    my @items = $class->load( \%terms, \%args );
+
+    $vars->{num_results} = $num_items;
+
+    my $i = 0;
+    foreach my $item (@items) {
+        local $vars->{__first__}   = !$i;
+        local $vars->{__last__}    = ( $i == ( scalar(@items) - 1 ) );
+        local $vars->{__odd__}     = ( $i % 2 ) == 0;                    # 0-based $i
+        local $vars->{__even__}    = ( $i % 2 ) == 1;
+        local $vars->{__counter__} = $i + 1;
+
+        # Assign the selected object
+        local $ctx->{__stash}{$ds} = $item;
+
+        my $out = $builder->build( $ctx, $tokens );
+        if ( !defined $out ) {
+
+            # A error--perhaps a tag used out of context. Report it.
+            return $ctx->error( $builder->errstr );
+        }
+        $res .= $out;
+        $i++;    # Increment for the meta vars.
+    }
+    return $res;
 }
 
 1;

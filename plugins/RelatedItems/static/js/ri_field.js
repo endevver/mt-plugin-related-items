@@ -1,14 +1,23 @@
-
-/* 
+/*
 timout id:
 we don't want to hit the server on every keystroke so we start a 3/4 sec timer.
 each keystroke resets the timer. if you stop typing for 3/4 sec, it fetches the preview results.
 */
-var toid;
+var toids = {};
+
+RIDEBUG=true;
+
+function _debug(msg) {
+    if (RIDEBUG) {
+        console.log(msg);
+    }
+}
 
 // load the preview based on the tags entered.
-function get_preview (tags) {
-    if (tags != '') {
+function get_preview (preview_id, type, blog_id, tags) {
+    _debug("get_preview -- getting preview for id: " + preview_id + " type: " + tags + " blog_id: " + blog_id + " tags: " + tags);
+            
+    if (tags) {
         var val = tags;
         // normalize the tags value
         var tags = val.split(',').map(function(str){ return $.trim(str)})
@@ -16,33 +25,53 @@ function get_preview (tags) {
 
         // blog_id and type are set in the page
         var ri_url = '/~steve/mt-pro/mt-search.cgi?__mode=ri_list_related_items&tags='+tagsstr+'&type='+type+'&count=3&blog_id='+blog_id;
-        $('.ri_preview').load(ri_url);
-        $('.ri_preview').show(0);
-    }
-    else {
-        $('.ri_preview').hide(0);
-        $('.ri_preview').html('');
+        $(preview_id).load(ri_url, function(){
+            $(this).show();
+        });
     }
 }
 
-$(function(){
-    var show_preview = $.cookie('ri_show_preview');
-    $('#ri_show_preview').click(function(){
-        show_preview =  $('#ri_show_preview').attr('checked');
-        $('.ri_preview').toggle(show_preview);
-        $.cookie('ri_show_preview', show_preview);
+function show_preview(switch_id){
+    return $(switch_id).attr('checked');
+}
 
-        if (show_preview) {
-            get_preview($('input[name='+field_name+']').get(0).value);
+function setup_ri_field ( field_name, preview_switch_id, preview_id, type, blog_id ) {
+    _debug("setup_preview_switch -- preview_switch_id: " + preview_switch_id);
+    _debug("setup_preview_switch -- field_name: " + field_name);
+
+    if (blog_id==0) {
+        url = window.location.href;
+        m = /blog_id=(\d+)/(url);
+        if (m[1]) {
+            blog_id = m[1]; 
+        }
+    }
+
+    $(preview_switch_id).click(function(){
+        _show_preview =  show_preview(preview_switch_id);
+        _debug("preview switch click -- show_preview: " + _show_preview);
+
+        if (show_preview(preview_switch_id)) {
+            var tags = $('input[name='+field_name+']').get(0).value;
+            // _debug("preview switch click -- getting preview for id: " + preview_id + " and tags: " + tags);
+            get_preview(preview_id, type, blog_id, tags);
+        } else {
+            $(preview_id).hide();
+            $(preview_id).html('');
         }
     });
+    _debug("setup auto complete -- field_name: " + field_name);
     $('input[name='+field_name+']').keyup(function(e){
-        if (!show_preview) {
+        _debug("autocomplete -- keyup: " + e.which);
+
+        if (!show_preview(preview_switch_id)) {
             return;
         }
-        if (toid) {
-            clearTimeout(toid);
+        if (toids[field_name]) {
+            clearTimeout(toids[field_name]);
         }
-        toid = setTimeout('get_preview(\''+this.value+'\')', 750);
-    })
-});
+        toids[field_name] = setTimeout('get_preview(\''+preview_id+'\',\''+type+'\',\''+blog_id+'\', \''+this.value+'\')', 750);
+    });
+}
+
+RI_SCRIPT_LOADED=true;

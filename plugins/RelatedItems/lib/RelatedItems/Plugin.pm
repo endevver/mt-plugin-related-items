@@ -19,4 +19,15 @@ sub load_customfield_types {
     };
 }
 
+sub get_object_types {
+    my $types = MT->registry('object_types');
+    my @classes;
+    foreach my $key ( keys %$types ) {
+        next if $key =~ /(\w+\.\w+)|^file$|^(as|profileevent)$/;
+        my $class = MT->model($key);
+        push @classes, $key if $class->isa('MT::Taggable');
+    }
+    return @classes;
+}
+
 1;

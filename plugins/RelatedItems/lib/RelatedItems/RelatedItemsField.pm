@@ -4,15 +4,12 @@ use strict;
 use warnings;
 use Data::Dumper;
 
+use RelatedItems::Plugin;
+
 sub _options_field {
 
-    my $types = MT->registry('object_types');
-    my @classes;
-    foreach my $key ( keys %$types ) {
-        next if $key =~ /\w+\.\w+/;    # skip subclasses
-        my $class = MT->model($key);
-        push @classes, $key if $class->isa('MT::Taggable');
-    }
+    my @classes = RelatedItems::Plugin::get_object_types();
+
     my $html = q{ <__trans phrase="Relate Items of Type">: <select name="options" id="options">};
     for my $c (@classes) {
         $html .= "<option value='$c'<mt:if name='options' eq='$c'> selected='selected'</mt:if>>"
@@ -37,31 +34,35 @@ sub _field_html {
     my $html =
         q{<link rel="stylesheet" href="http://localhost<mt:RelatedItemsStaticWebPath />css/ri_styles.css" />};
     $html .= q{<div class="ri_tag_div"><input class="" type="text" name="<mt:var name="field_name">" 
-       id="<mt:var name="field_id">" value="<mt:Var name="field_value" escape="html">" size="40"> <label>Show preview <input name="ri_show_preview" id="ri_show_preview" type="checkbox" value="show_preview" checked="checked" /></label></div>};
+       id="<mt:var name="field_id">" value="<mt:Var name="field_value" escape="html">" size="40"> <label>Show preview <input name="ri_<mt:var name="field_name">_show_preview" id="ri_<mt:var name="field_name">_show_preview" type="checkbox" value="show_preview" checked="checked" /></label></div>};
     $html .= q{<script type="text/javascript">
-var field_name = '<mt:var name="field_name">';
 $(function(){
-    var script = document.createElement( 'script' );
-    script.type = 'text/javascript';
-    script.src = 'http://localhost<mt:RelatedItemsStaticWebPath />js/jquery.cookie-modified.js';
-    $('.ri_preview').append(script);
+    var field_name = '<mt:var name="field_name">';
+    var preview_switch_id = '#ri_' + field_name + '_show_preview';
+    var preview_id = '#ri_' + field_name + '_preview';
+    var type="<mt:var name='options' />";
+    var blog_id='<mt:var name="blog_id" />';
+
+    if (typeof(RI_SCRIPT_LOADED) == "undefined" ) {
+        $.getScript("<mt:RelatedItemsStaticWebPath />js/ri_field.js", function(){
+            setup_ri_field ( field_name, preview_switch_id, preview_id, type, blog_id );
+        });
+    } else {
+        setup_ri_field ( field_name, preview_switch_id, preview_id, type, blog_id);
+    }
 });
 };
 
-    my $obj_type = 'entry';
-
-    $html .= "var blog_id = $blog_id; var type = '$obj_type'; var count = '$count'; </script>";
-    $html .= q{<div class=" field-header "></div>};
+    $html .=
+        "var blog_id = $blog_id; var <mt:var name='field_name'>_type = '<mt:var name='options' />'; var count = '$count'; </script>";
+    $html .= q{<div class="field-header"></div>};
 
     $html .= q{<fieldset>
 <legend>Related Items Preview</legend>
-<h2>Related entries:</h2>
-<div class=" ri_preview ">
+<h2>Related <mt:var name="options"> items:</h2>
+<div id="ri_<mt:var name="field_id" />_preview">
 </div>
 </fieldset>
-};
-    $html .= q{
-<script type="text/javascript" src="http://localhost<mt:RelatedItemsStaticWebPath />js/ri_field.js"></script>
 };
     return $html;
 }
@@ -132,8 +133,8 @@ sub _render {
     my $plugin = MT->component("RelatedItems");
     my $config = $plugin->get_config_hash("blog:$blog_id");
 
-    my $type                  = $app->param('type');
-    my $default_type_template = "ri_list_related_$type";
+    my $type          = $app->param('type');
+    my $type_template = "ri_list_related_items.mtml";
 
     require MT::Template::Context;
     my $ctx = MT::Template::Context->new;
@@ -146,18 +147,12 @@ sub _render {
     $vars->{blogid} = $blog_id;
     $vars->{tags}   = $tag_var;
     $vars->{count}  = $count;
+    $vars->{type}   = $type;
 
     my $tmpl_class = $app->model('template');
-    my $tmpl_module = $app->param('tmpl') || $default_type_template;
 
-    my $tmpl = $tmpl_class->load(
-        {
-
-            # blog_id => $blog_id,
-            identifier => $tmpl_module
-        },
-    );
-    return $app->errtrans( 'Error loading template: [_1]', $tmpl_module )
+    my $tmpl = $plugin->load_tmpl($type_template);
+    return $app->errtrans( 'Error loading template: [_1]', $type_template )
         unless $tmpl;
 
     $tmpl->context($ctx);
