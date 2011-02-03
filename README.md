@@ -61,3 +61,15 @@ In the Entry archive template, or Entry Summary template, add template code to l
         </mt:RelatedItems
         </ul>
     </mt:ifnonempty>
+
+## Acknowledgements
+
+This plugin was commissioned by Endevver to Steve Ivy of Wallrazer. Endevver is proud to be partners with Wallrazer. <http://wallrazer.com>
+
+## License
+
+This plugin is licensed under the same terms as Perl itself.
+
+## Copyright
+
+Copyright 2009, Endevver LLC. All rights reserved.
