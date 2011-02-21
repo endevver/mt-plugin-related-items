@@ -44,13 +44,14 @@ sub _field_html {
     var preview_id = '#ri_' + field_name + '_preview';
     var type="<mt:var name='options' />";
     var blog_id='<mt:var name="blog_id" />';
+    var count="$count";
 
     if (typeof(RI_SCRIPT_LOADED) == "undefined" ) {
         \$.getScript("<mt:PluginStaticWebPath component="relateditems">js/ri_field.js", function(){
-            setup_ri_field ( source_type, source_id, field_name, preview_switch_id, preview_id, type, blog_id );
+            setup_ri_field ( source_type, source_id, field_name, preview_switch_id, preview_id, type, blog_id, count );
         });
     } else {
-        setup_ri_field ( source_type, source_id, field_name, preview_switch_id, preview_id, type, blog_id);
+        setup_ri_field ( source_type, source_id, field_name, preview_switch_id, preview_id, type, blog_id, count);
     }
 });
 var blog_id = $blog_id; 
