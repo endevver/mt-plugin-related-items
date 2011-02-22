@@ -3,7 +3,7 @@ use warnings;
 
 use lib 't/lib', 'lib', 'extlib';
 use MT::Test qw( :cms :db :data );
-use Test::More tests => 31;
+use Test::More tests => 37;
 
 use MT;
 
@@ -20,20 +20,23 @@ my $ttypes = MT->registry('object_types');
 
 my @tclasses = RelatedItems::RelatedItemsField::get_object_types();
 
-my $tag = 'atag';
+my $tags = 'normaltag, @privatetag';
+my @tags = MT::Tag->split( ",", $tags );
+
+diag explain @tags;
 
 SETUP: {
     for my $tclass (@tclasses) {
         for my $i ( 1 .. 3 ) {
             my $item = MT->model($tclass)->new();
-            $item->tags($tag);
+            $item->tags(@tags);
             if ( $tclass =~ /^(entry|page|as)$/ ) {
-                $item->title("$tclass with tag $tag");
+                $item->title("$tclass with tags $tags");
                 $item->author_id(1);
                 $item->status(2) if $item->can('status');
             }
             else {
-                $item->label("$tclass with tag $tag");
+                $item->label("$tclass with tags $tags");
             }
             $item->blog_id(1);
             $item->save;
@@ -75,7 +78,7 @@ foreach my $tclass (@tclasses) {
     ok( $field, 'created Related ' . $tclass . ' custom field' );
 
     my $full_basename = "field.$basename";
-    $ri_entry->$full_basename($tag);
+    $ri_entry->$full_basename($tags);
 }
 
 $ri_entry->save;
@@ -91,13 +94,15 @@ foreach my $tclass (@tclasses) {
     my $tmpl_text =
         "<mt:RelatedItems basename='$basename'><mt:$nametag /> [<mt:var name='num_results' />] </mt:RelatedItems>";
 
-    tmpl_out_like(
-        $tmpl_text, {},
-        { blog_id => $blog->id, blog => $blog, entry => $ri_entry },
-        qr/^$tclass with tag $tag/,
-        "$basename, no lastn, returns $tclass objects tagged '$tag' for field value '$tag'"
-    ) or diag( "Template error: " . get_tmpl_error() );
-
+    for my $tag (@tags) {
+        tmpl_out_like(
+            $tmpl_text, {},
+            { blog_id => $blog->id, blog => $blog, entry => $ri_entry },
+            qr/^$tclass.*?$tag/,
+            "$basename, no lastn, returns $tclass objects tagged '$tag' for field value '$tag'"
+        ) or diag( "Template error: " . get_tmpl_error() );
+    }
+    
     tmpl_out_like( $tmpl_text, {}, { blog_id => $blog->id, blog => $blog, entry => $ri_entry },
         qr/[3]/, "$basename, no lastn, total results is 3" )
         or diag( "Template error: " . get_tmpl_error() );
