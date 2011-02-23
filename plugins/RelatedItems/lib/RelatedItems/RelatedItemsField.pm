@@ -102,7 +102,7 @@ sub ri_list_related_items {
     my $source_type = $app->param('_type')
         or return $app->errtrans('No _type.');
     my $source_id = $app->param('id')
-        or return $app->errtrans('No id.');
+        or return 'The entry must be saved before a preview can be provided.';
 
 
 	my $basename = $app->param('basename');
