@@ -75,7 +75,12 @@ sub related_items_tag {
     elsif ( $obj_type eq 'page' ) {
 
         # Entries and Pages are both stored in the mt_entry table
-        $object = MT::Entry->load( { id => $ctx->stash('page')->id, } );
+        if ($ctx->stash('page')) {
+            $object = MT::Entry->load( { id => $ctx->stash('page')->id, } );            
+        }
+        elsif ($ctx->stash('entry')) {
+            $object = MT::Entry->load( { id => $ctx->stash('entry')->id, } );            
+        }
     }
     elsif ( $obj_type eq 'category' ) {
         $object = MT::Category->load( { id => $ctx->stash('category')->id, } );
