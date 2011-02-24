@@ -11,6 +11,9 @@ settings:
     related_items_count:
         default: 5
         scope: blog
+    related_items_show_preview:
+        scope: blog
+
 blog_config_template: blog_config.tmpl
 
 applications:
@@ -27,3 +30,10 @@ default_templates:
 tags:
     block:
         RelatedItems: $RelatedItems::RelatedItems::Tags::related_items_tag
+
+callbacks:
+    # Load jQuery.
+    MT::App::CMS::template_source.edit_entry:    $RelatedItems::RelatedItems::Plugin::update_template
+    MT::App::CMS::template_source.edit_author:   $RelatedItems::RelatedItems::Plugin::update_template
+    MT::App::CMS::template_source.edit_category: $RelatedItems::RelatedItems::Plugin::update_template
+    MT::App::CMS::template_source.edit_folder:   $RelatedItems::RelatedItems::Plugin::update_template
