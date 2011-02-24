@@ -1,9 +1,9 @@
 name: Related Items
 id: RelatedItems
 description: Provide an easy, tag-based UI that allows users to see/select entries or assets that are related to the current entry
-version: 0.1
+version: 0.3
 schema_version: 3
-static_version: 18
+static_version: 19
 
 customfield_types: $RelatedItems::RelatedItems::Plugin::load_customfield_types
 
