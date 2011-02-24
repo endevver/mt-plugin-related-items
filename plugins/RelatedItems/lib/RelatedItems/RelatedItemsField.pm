@@ -27,14 +27,19 @@ sub _field_html {
     my $source_type = $app->param('_type');
     my $source_id   = $app->param('id');
 
-    my $plugin = MT->component('RelatedItems');
-    my $config = $plugin->get_config_hash( 'blog:' . $blog_id );
-    my $count  = $config->{related_items_count};
+    my $plugin       = MT->component('RelatedItems');
+    my $config       = $plugin->get_config_hash( 'blog:' . $blog_id );
+    my $count        = $config ? $config->{related_items_count} : 5;
+    my $show_preview = $config ? $config->{related_items_show_preview} : 1;
 
     my $html = <<"HTML";
 <link rel="stylesheet" href="<mt:PluginStaticWebPath component="relateditems">css/ri_styles.css" />
 <div class="ri_tag_div"><input class="" type="text" name="<mt:var name="field_name">" 
-       id="<mt:var name="field_id">" value="<mt:Var name="field_value" escape="html">" size="40"> <label>Show preview <input name="ri_<mt:var name="field_name">_show_preview" id="ri_<mt:var name="field_name">_show_preview" type="checkbox" value="show_preview" checked="checked" /></label></div>
+       id="<mt:var name="field_id">" value="<mt:Var name="field_value" escape="html">" size="40"></div>
+HTML
+
+    if ($show_preview) {
+        $html .= <<"HTML";
 <script type="text/javascript">
 \$(function(){
 	var source_type = "$source_type";
@@ -46,14 +51,9 @@ sub _field_html {
     var blog_id='<mt:var name="blog_id" />';
     var count="$count";
 
-    if (typeof(RI_SCRIPT_LOADED) == "undefined" ) {
-        \$.getScript("<mt:PluginStaticWebPath component="relateditems">js/ri_field.js", function(){
-            setup_ri_field ( source_type, source_id, field_name, preview_switch_id, preview_id, type, blog_id, count );
-        });
-    } else {
-        setup_ri_field ( source_type, source_id, field_name, preview_switch_id, preview_id, type, blog_id, count);
-    }
+    setup_ri_field ( source_type, source_id, field_name, preview_switch_id, preview_id, type, blog_id, count);
 });
+
 var blog_id = $blog_id; 
 var <mt:var name='field_name'>_type = '<mt:var name='options' />';
 var count = '$count';
@@ -63,21 +63,14 @@ var count = '$count';
 <div class="preview_pane"></div>
 </fieldset>
 HTML
-
+    }
     return $html;
 }
 
 sub ri_list_related_items {
     my $app = shift;
 
-    my $terms = {};
-    my $args  = {};
-
-	my $count;
-	
-    if ( $app->param('count') ) {
-        $count = $app->param('count');
-    }
+    my $args = {};
 
     return $app->errtrans("Blog_id is required.")
         unless defined( $app->param('blog_id') );
@@ -96,24 +89,28 @@ sub ri_list_related_items {
     $blog_id =~ s/\D//g;
     my $blog = $app->model('blog')->load($blog_id)
         or return $app->errtrans('Invalid blog');
-	
-	$terms->{'blog_id'} = $blog_id;
-	
+
+    my $plugin = MT->component('relateditems');
+    my $config = $plugin->get_config_hash( 'blog:' . $blog_id );
+
+    my $count = $config ? $config->{'related_items_count'} : 5;
+
+    if ( $app->param('count') ) {
+        $count = $app->param('count');
+    }
+    my $terms = { blog_id => $blog_id, class => '*' };
+
     my $source_type = $app->param('_type')
         or return $app->errtrans('No _type.');
     my $source_id = $app->param('id')
-        or return 'The entry must be saved before a preview can be provided.';
+        or return "The $source_type must be saved before a preview can be provided.";
 
-
-	my $basename = $app->param('basename');
-
-    my $plugin = MT->component("RelatedItems");
-    my $config = $plugin->get_config_hash("blog:$blog_id");
+    my $basename = $app->param('basename');
 
     my $type          = $app->param('type');
     my $type_template = "ri_list_related_items.mtml";
 
-	my $ds   = MT->model($type)->datasource;
+    my $ds = MT->model($type)->datasource;
 
     require MT::Tag;
     require MT::ObjectTag;
@@ -132,41 +129,36 @@ sub ri_list_related_items {
     }
     @tag_ids = (0) unless @tags;
 
-	$args->{'join'} = [ 
-		'MT::ObjectTag', 
-		'object_id', 
-		{ tag_id => \@tag_ids, object_datasource => $ds }, 
-		{ unique => 1 }
-	];
-	
-	my $hasher = sub {
+    $args->{'join'} =
+        [ 'MT::ObjectTag', 'object_id', { tag_id => \@tag_ids, object_datasource => $ds }, { unique => 1 } ];
+
+    my $hasher = sub {
         my ( $obj, $row ) = @_;
-		MT->log(Dumper($row));
-		if ($row->{class} =~ /entry|page/) {
-			$row->{name} = $row->{title};
-		} else {
-			$row->{name} = $row->{label};
-		}
+        if ( $row->{class} =~ /entry|page/ ) {
+            $row->{name} = $row->{title};
+        }
+        else {
+            $row->{name} = $row->{label};
+        }
         $row->{label} = $row->{name};
     };
-    
-	return $app->listing(
-		{
-			type => $type,
-			template => $plugin->load_tmpl($type_template),
-			terms => $terms,
-			args => $args,
-			code => $hasher,
-			params => {
-				basename => $basename,
-				blogid => $blog_id,
-			    basename => $basename,
-			    tags     => $tag_var,
-			    count    => $count,
-			    type     => $type,
-			}
-		}
-	);
+
+    return $app->listing(
+        {   type     => $type,
+            template => $plugin->load_tmpl($type_template),
+            terms    => $terms,
+            args     => $args,
+            code     => $hasher,
+            params   => {
+                basename => $basename,
+                blogid   => $blog_id,
+                basename => $basename,
+                tags     => $tag_var,
+                count    => $count,
+                type     => $type,
+            }
+        }
+    );
 }
 
 sub _render {
@@ -210,7 +202,7 @@ sub _render {
     $ctx->stash( 'count', $count ) if defined $count;
 
     my $vars = $ctx->{__stash}{vars} ||= {};
-	
+
     $vars->{blogid}   = $blog_id;
     $vars->{basename} = $basename;
     $vars->{tags}     = $tag_var;
