@@ -20,7 +20,6 @@ sub load_customfield_types {
 }
 
 sub update_template {
-    MT->log('update template');
 
     # This is responsible for loading jQuery in the head of the site.
     my ( $cb, $app, $template ) = @_;

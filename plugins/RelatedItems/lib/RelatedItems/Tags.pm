@@ -38,9 +38,6 @@ sub related_items_tag {
         );
     }
 
-    MT->log("related_items_tag: cf_basename: $cf_basename");
-    MT->log("related_items_tag: real_basename: $real_basename");
-
     # get count from args, or blog plugin setting (defaults to 5)
     my $count = $args->{lastn};
     if ( !$count ) {
@@ -75,11 +72,11 @@ sub related_items_tag {
     elsif ( $obj_type eq 'page' ) {
 
         # Entries and Pages are both stored in the mt_entry table
-        if ($ctx->stash('page')) {
-            $object = MT::Entry->load( { id => $ctx->stash('page')->id, } );            
+        if ( $ctx->stash('page') ) {
+            $object = MT::Entry->load( { id => $ctx->stash('page')->id, } );
         }
-        elsif ($ctx->stash('entry')) {
-            $object = MT::Entry->load( { id => $ctx->stash('entry')->id, } );            
+        elsif ( $ctx->stash('entry') ) {
+            $object = MT::Entry->load( { id => $ctx->stash('entry')->id, } );
         }
     }
     elsif ( $obj_type eq 'category' ) {
@@ -103,8 +100,8 @@ sub related_items_tag {
 
     my $class = MT->model($type);
 
-    my %terms = ( 'blog_id' => $blog_id, );
-    my %args  = ( 'desc'    => 'DESC' );
+    my %terms = ( 'blog_id' => $blog_id, class => '*' );
+    my %args = ( 'desc' => 'DESC' );
 
     # $object->$basename gets the value of the custom field for the object
     # in our case, the tags to use to calculate related items
@@ -131,9 +128,9 @@ sub related_items_tag {
     $args{'lastn'} = $count;
     my @items = $class->load( \%terms, \%args );
 
-	$vars->{object_loop} = \@items;
-	$vars->{hide_pager} = 1;
-	
+    $vars->{object_loop} = \@items;
+    $vars->{hide_pager}  = 1;
+
     $vars->{num_results} = $num_items;
 
     my $i = 0;
@@ -149,6 +146,7 @@ sub related_items_tag {
 
         my $out = $builder->build( $ctx, $tokens );
         if ( !defined $out ) {
+
             # A error--perhaps a tag used out of context. Report it.
             return $ctx->error( $builder->errstr );
         }
