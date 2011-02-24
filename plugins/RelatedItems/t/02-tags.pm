@@ -16,8 +16,6 @@ use RelatedItems::RelatedItemsField;
 require MT::Template;
 require MT::Template::Context;
 
-my $ttypes = MT->registry('object_types');
-
 my @tclasses = RelatedItems::RelatedItemsField::get_object_types();
 
 my $tags = 'normaltag, @privatetag';
@@ -95,14 +93,12 @@ foreach my $tclass (@tclasses) {
         "<mt:RelatedItems basename='$basename'><mt:$nametag /> [<mt:var name='num_results' />] </mt:RelatedItems>";
 
     for my $tag (@tags) {
-        tmpl_out_like(
-            $tmpl_text, {},
-            { blog_id => $blog->id, blog => $blog, entry => $ri_entry },
+        tmpl_out_like( $tmpl_text, {}, { blog_id => $blog->id, blog => $blog, entry => $ri_entry },
             qr/^$tclass.*?$tag/,
-            "$basename, no lastn, returns $tclass objects tagged '$tag' for field value '$tag'"
-        ) or diag( "Template error: " . get_tmpl_error() );
+            "$basename, no lastn, returns $tclass objects tagged '$tag' for field value '$tag'" )
+            or diag( "Template error: " . get_tmpl_error() );
     }
-    
+
     tmpl_out_like( $tmpl_text, {}, { blog_id => $blog->id, blog => $blog, entry => $ri_entry },
         qr/[3]/, "$basename, no lastn, total results is 3" )
         or diag( "Template error: " . get_tmpl_error() );
