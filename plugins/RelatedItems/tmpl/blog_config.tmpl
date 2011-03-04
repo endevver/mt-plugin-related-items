@@ -1,18 +1,17 @@
 <mtapp:setting
-  id="related_items_count"
-  label="Related Items Count"
-  hint="By default, how many related items to return on previews and on published related items lists. This vaue can be overridden for individual fields in published pages by including the 'lastn' attribute in the RelatedItemsField tag."
-  show_hint="1">
-  <input type="text" name="related_items_count" id="related_items_count" 
-       value="<mt:var name="related_items_count">" />
+  id="related_items_show_preview"
+  label="Show a Preview?">
+  <label><input type="checkbox" name="related_items_show_preview"
+       id="related_items_show_preview" 
+       value="1"<mt:if name="related_items_show_preview">
+       checked="checked"</mt:if>/> <__trans phrase="Preview Related Items tag matches"></label>
 </mtapp:setting>
 
 <mtapp:setting
-  id="related_items_show_preview"
-  label="Show Preview on Edit Pages?"
-  hint="Show a preview of matching items in edit screens."
+  id="related_items_count"
+  label="Related Items Count"
+  hint="The number of related items to return on previews and on published related items lists. (This vaue can be overridden for individual fields in published pages by including the &ldquo;lastn&rdquo; attribute in the RelatedItemsField tag.)"
   show_hint="1">
-  <label><input type="checkbox" name="related_items_show_preview" id="related_items_show_preview" 
-       value="1"<mt:if name="related_items_show_preview">
-       checked</mt:if>/> <__trans phrase="Show Preview"></label>
+  <input type="text" name="related_items_count" id="related_items_count" 
+       value="<mt:var name="related_items_count">" class="full-width ti" />
 </mtapp:setting>

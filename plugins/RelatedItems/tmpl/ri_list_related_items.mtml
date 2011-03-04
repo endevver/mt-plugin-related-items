@@ -1,20 +1,36 @@
 <MTApp:Listing type="$type" hide_pager="1" show_actions="0">
-    <mt:if __first__>
-            <thead>
-                <tr>
-                    <th id="cf-name"><__trans phrase="Name"></th>
-                    <th id="cf-name"><__trans phrase="Type"></th>
-                    <th id="cf-name"><__trans phrase="Published"></th>
-                </tr>
-            </thead>
-            <tbody>
-    </mt:if>
-    <tr class="<mt:if name="__odd__">odd<mt:else>even</mt:if>">
-        <td><a href="<mt:var name="script_url">?__mode=view&amp;_type=<mt:var name="type">&amp;blog_id=<mt:var name="blog_id">&amp;id=<mt:var name="id">"><mt:var name="name"></a></td>
-        <td><mt:var name="type" /></td>
-        <td><mt:date ts="$modified_on" /></td>
+    <mt:If name="__first__">
+<thead>
+    <tr>
+        <th><__trans phrase="Name"></th>
+        <th><__trans phrase="Published"></th>
+    <mt:If name="view">
+        <th><__trans phrase="View"></th>
+    </mt:If>
     </tr>
-<mt:if __last__>
+</thead>
+<tbody>
+    </mt:If>
+    <tr class="<mt:if name="__odd__">odd<mt:else>even</mt:if>">
+        <td>
+            <a href="<mt:var name="script_url">?__mode=view&amp;_type=<mt:var name="type">&amp;blog_id=<mt:var name="blog_id">&amp;id=<mt:var name="id">"  target="<__trans phrase="_external_link_target">"><mt:Var name="name"></a>
+        </td>
+        <td><mt:date ts="$modified_on" /></td>
+    <mt:If name="view">
+        <td class="view si status-view" style="width: 35px;">
+            <a href="<mt:Var name="link">" target="<__trans phrase="_external_link_target">" title="<__trans phrase="View <mt:Var name="type">">"><img src="<mt:var name="static_uri">images/spacer.gif" alt="<__trans phrase="View entry">" width="13" height="9" /></a>
+        </td>
+    </mt:if>
+    </tr>
+    <mt:if name="__last__">
 </tbody>
-</mt:if>
+        <mt:If name="__counter__" lt="$total_count">
+<tfooter>
+    <tr>
+        <td colspan="3" style="text-align: right;">
+            Showing <mt:Var name="count"> of <mt:Var name="total_count"> matches.
+        </td>
+</tfooter>
+        </mt:If>
+    </mt:if>
 </MTApp:Listing>

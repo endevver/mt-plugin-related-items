@@ -1,13 +1,15 @@
 # Related Items Overview
 
-Related Items provides a custom field that allows users to relate entries or assets (or any Taggable objects) to the current entry by way of a set of tags. After adding the custom field to a blog, a set of tags can be entered in the field. In blog templates, the RelatedItems block tag can be used to pull in the related entries, pages, or assets in an object loop to be rendered in the template.
+Related Items provides a custom field that allows users to relate the current object to any Taggable object. Said differently, with this custom field you can relate a system object (Entry, Page, Category, Folder, or User) to Taggable objects: assets, entries, and pages.
 
-For example, a site may want to link a documentation page to blog posts about that are related to the subject being documented, and to realted file uploadeds as well. With a "Related Items" field on Page, configured to relate Entries, the Page template can load related blog posts and render the list along with the Page content. Another "Related Items" field configured to relate Assets (files) would allow the Page template to load related file uploads and display them.
+After creating a Related Items custom field, a tag or tags can be entered in the field. The resulting matches are displayed in a "preview" area to help ensure the correct tag or tags were entered.
+
+For example, a site may want to link a documentation page to blog posts that are related to the subject being documented. With a Related Items custom field on Pages, configured to relate Entries, the Page template can load related blog posts and render the list along with the Page content. Another Related Items custom field configured to relate Assets (files) would allow the Page template to load related Assets and display them.
 
 ## Prerequisites
 
 * Movable Type Professional
-* [Config Assitant](https://github.com/openmelody/mt-plugin-configassistant)
+* [Config Assistant](https://github.com/openmelody/mt-plugin-configassistant/downloads)
 
 ## Installation
 
@@ -19,11 +21,15 @@ To install this plugin follow the instructions found here:
 
 Related Items can be configured at the Blog level. Visit Tools > Plugins to find Related Items, then click Settings.
 
-**Related Items Count** is the default number of items that will be returned for a given field if not overridden in the template tag.
+The **Show a Preview** option is enabled by default and will display tag matches.
+
+**Related Items Count** is the number of items returned in the preview area. Use this setting to ensure you don't accidentally grab thousands of items, for example. (The total number of found items is shown in the preview area if it exceeds the Count value set here.)
 
 ## Use
 
 ### Add a new Related Items field
+
+Create a Related Items custom field as you would any other custom field:
 
 * Go to Preferences > Custom Fields in your blog or from the system overview (fields defined at the System level will be available to all blogs).
 * Click "New field"
@@ -37,7 +43,7 @@ Related Items can be configured at the Blog level. Visit Tools > Plugins to find
 * Give the field a **Template Tag** name (ie: "EntryDocumentationPages")
 * Save the field
 
-On the edit entry screen:
+On the Edit Entry (or Edit Page) screen:
 
 * Under **Display Options**, select "Documentation Pages" to display the field
 * Enter some tags in the field.
@@ -45,7 +51,7 @@ On the edit entry screen:
 
 ## Template Tags
 
-Related Items provides one template tag, the block tag **RelatedItems**. This tag creates on object loop of the related items, and provides the normal meta loop variables as well (\_\_first\_\_, \_\_last\_\_, \_\_even\_\_, \_\_odd\_\_, \_\_counter\_\_). The tags has one required argument: *basename*. This should be set to the basename of the field you want to list related items for. Additionally the tag accepts both *blog_id* and *lastn* arguments. Setting *blog_id* will tell the tag to pull related items from a different blog from the one currently in context. Setting *lastn* will limit the returned results to this number. By default, the tag will return the number set in the plugin settings (defaults to 5).
+Related Items provides one template tag, the block tag **RelatedItems**. This tag creates on object loop of the related items, and provides the normal meta loop variables as well (\_\_first\_\_, \_\_last\_\_, \_\_even\_\_, \_\_odd\_\_, \_\_counter\_\_). The tags has one required argument: `basename`. This should be set to the basename of the field you want to list related items for. Additionally the tag accepts both `blog_id` and `lastn` arguments. Setting `blog_id` will tell the tag to pull related items from a different blog from the one currently in context. Setting `lastn` will limit the returned results to this number. By default, the tag will return the number set in the plugin settings (defaults to 5).
 
 ### Example
 
@@ -72,4 +78,4 @@ This plugin is licensed under the same terms as Perl itself.
 
 ## Copyright
 
-Copyright 2009, Endevver LLC. All rights reserved.
+Copyright 2011, [Endevver, LLC](http://endevver.com). All rights reserved.

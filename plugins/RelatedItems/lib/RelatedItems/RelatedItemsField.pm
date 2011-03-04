@@ -34,8 +34,14 @@ sub _field_html {
 
     my $html = <<"HTML";
 <link rel="stylesheet" href="<mt:PluginStaticWebPath component="relateditems">css/ri_styles.css" />
-<div class="ri_tag_div"><input class="" type="text" name="<mt:var name="field_name">" 
-       id="<mt:var name="field_id">" value="<mt:Var name="field_value" escape="html">" size="40"></div>
+<div class="ri_tag_div textarea-wrapper">
+    <input type="text" 
+        name="<mt:Var name="field_name">" 
+        id="<mt:Var name="field_id">" 
+        value="<mt:Var name="field_value" escape="html">" 
+        class="full-width ti"
+        autocomplete="off" />
+</div>
 HTML
 
     if ($show_preview) {
@@ -51,16 +57,43 @@ HTML
     var blog_id='<mt:var name="blog_id" />';
     var count="$count";
 
-    setup_ri_field ( source_type, source_id, field_name, preview_switch_id, preview_id, type, blog_id, count);
+    setup_ri_field ( 
+        source_type, 
+        source_id, 
+        field_name, 
+        preview_switch_id, 
+        preview_id, 
+        type, 
+        blog_id, 
+        count
+    );
 });
 
 var blog_id = $blog_id; 
 var <mt:var name='field_name'>_type = '<mt:var name='options' />';
 var count = '$count';
 </script>
-<fieldset id="ri_<mt:var name="field_id" />_preview">
-<legend>Preview</legend>
-<div class="preview_pane"></div>
+<fieldset id="ri_<mt:var name="field_id" />_preview" class="ri_preview">
+    <mt:Ignore>
+        The title attribute needs to be specified with the legend. Otherwise, 
+        everything gets a title of "undefined."
+    </mt:Ignore>
+    <legend title="A preview of the <mt:Var name="options"> tag search.">
+        Preview
+    </legend>
+    <div class="preview_pane">
+        <mt:Ignore>
+            The following text should be almost immediately overwritten by 
+            the AJAX load attempt.
+        </mt:Ignore>
+        <mt:If name="source_id">
+            Nothing to preview. Enter comma-separated tags to search for a 
+            matching <mt:Var name="options">.
+        <mt:Else>
+            This <mt:Var name="options"> must be saved before a preview can be 
+            provided.
+        </mt:If>
+    </div>
 </fieldset>
 HTML
     }
@@ -72,23 +105,27 @@ sub ri_list_related_items {
 
     my $args = {};
 
-    return $app->errtrans("Blog_id is required.")
+    # We've done a bunch of checking in the Javascript to ensure that the 
+    # AJAX url is properly crafted, but trouble could still squeak through. 
+    # Return errors as a piece of text (not $app-errstr) so that the error 
+    # can be displayed without screwing up the page display.
+    return "Blog_id parameter is required."
         unless defined( $app->param('blog_id') );
 
     # what kind of object are we listing?
-    return $app->errtrans("Type parameter is required.")
+    return "Type parameter is required."
         unless $app->param('type');
 
-    return $app->errtrans("Tags parameter is required.")
+    return "Tags parameter is required."
         unless $app->param('tags');
 
-    return $app->errtrans("Basename parameter is required.")
+    return "Basename parameter is required."
         unless $app->param('basename');
 
     my $blog_id = $app->param('blog_id');
     $blog_id =~ s/\D//g;
     my $blog = $app->model('blog')->load($blog_id)
-        or return $app->errtrans('Invalid blog');
+        or return "Invalid blog";
 
     my $plugin = MT->component('relateditems');
     my $config = $plugin->get_config_hash( 'blog:' . $blog_id );
@@ -101,9 +138,9 @@ sub ri_list_related_items {
     my $terms = { blog_id => $blog_id, class => '*' };
 
     my $source_type = $app->param('_type')
-        or return $app->errtrans('No _type.');
+        or return 'No _type.';
     my $source_id = $app->param('id')
-        or return "The $source_type must be saved before a preview can be provided.";
+        or return "This $source_type must be saved before a preview can be provided.";
 
     my $basename = $app->param('basename');
 
@@ -129,16 +166,36 @@ sub ri_list_related_items {
     }
     @tag_ids = (0) unless @tags;
 
-    $args->{'join'} =
-        [ 'MT::ObjectTag', 'object_id', { tag_id => \@tag_ids, object_datasource => $ds }, { unique => 1 } ];
+    $args->{'sort'}      = 'created_on';
+    $args->{'direction'} = 'descend';
+
+    # Count the total number of objects found. This is used for the "total 
+    # count" display at the bottom of the returned object table. We need to 
+    # use a  join *without* the limit argument so that we can collect all of 
+    # the results.
+    $args->{'join'} = [ 
+        'MT::ObjectTag', 
+        'object_id', 
+        { tag_id => \@tag_ids, 
+          object_datasource => $ds }, 
+        { unique => 1, },
+    ];
+
+    my $total_count = MT->model($type)->count($terms,$args);
+
+    # Now add the limit argument to the join, which will be used by
+    # app:listing to generate the table.
+    $args->{'join'}[3]{limit} = $count;
 
     my $hasher = sub {
         my ( $obj, $row ) = @_;
         if ( $row->{class} =~ /entry|page/ ) {
             $row->{name} = $row->{title};
+            $row->{link} = $obj->permalink;
         }
         else {
             $row->{name} = $row->{label};
+            $row->{link} = $obj->url;
         }
         $row->{label} = $row->{name};
     };
@@ -150,74 +207,16 @@ sub ri_list_related_items {
             args     => $args,
             code     => $hasher,
             params   => {
-                basename => $basename,
-                blogid   => $blog_id,
-                basename => $basename,
-                tags     => $tag_var,
-                count    => $count,
-                type     => $type,
+                basename    => $basename,
+                blogid      => $blog_id,
+                basename    => $basename,
+                tags        => $tag_var,
+                count       => $count,
+                type        => $type,
+                total_count => $total_count,
             }
         }
     );
-}
-
-sub _render {
-    my $app = shift;
-    my ($count) = @_;
-
-    my $blog_id = $app->param('blog_id');
-    $blog_id =~ s/\D//g;
-    my $blog = $app->model('blog')->load($blog_id)
-        or return $app->errtrans('Invalid blog');
-
-    my $source_type = $app->param('_type')
-        or return $app->errtrans('No _type.');
-    my $source_id = $app->param('id')
-        or return $app->errtrans('No id.');
-
-    my $basename = $app->param('basename');
-
-    my $tag_var = $app->param('tags');
-    $tag_var =~ s/,$/ /;
-    if ( $tag_var =~ /,/ ) {
-        my @tags_input = split( '\s?,\s?', $app->param('tags') );
-        $tag_var = join( ' OR ', @tags_input );
-    }
-    my $plugin = MT->component("RelatedItems");
-    my $config = $plugin->get_config_hash("blog:$blog_id");
-
-    my $type          = $app->param('type');
-    my $type_template = "ri_list_related_items.mtml";
-
-    require MT::Template::Context;
-    my $ctx = MT::Template::Context->new;
-    $ctx->stash( 'blog',          $blog );
-    $ctx->stash( 'blog_id',       $blog_id );
-    $ctx->stash( 'local_blog_id', $blog_id );
-
-    my $item = MT->model($source_type)->load($source_id)
-        or return $app->errtrans("Couldn't load $source_type with id $source_id");
-    $ctx->stash( $source_type, $item );
-
-    $ctx->stash( 'count', $count ) if defined $count;
-
-    my $vars = $ctx->{__stash}{vars} ||= {};
-
-    $vars->{blogid}   = $blog_id;
-    $vars->{basename} = $basename;
-    $vars->{tags}     = $tag_var;
-    $vars->{count}    = $count;
-    $vars->{type}     = $type;
-
-    my $tmpl_class = $app->model('template');
-
-    my $tmpl = $plugin->load_tmpl($type_template);
-    return $app->errtrans( 'Error loading template: [_1]', $type_template )
-        unless $tmpl;
-
-    $tmpl->context($ctx);
-
-    return $tmpl;
 }
 
 sub get_object_types {
