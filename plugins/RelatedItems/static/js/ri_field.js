@@ -26,7 +26,7 @@ function get_preview (source_type, source_id, field_name, preview_id, type, blog
         // blog_id and type are set in the page
         var ri_url = ScriptURI + '?__mode=ri_list_related_items&_type='+source_type+'&id='+source_id+'&tags='+tagsstr+'&basename='+field_name+'&type='+type+'&count='+count+'&blog_id='+blog_id;
         $(preview_id + " .preview_pane").load(ri_url, function(){
-			_debug('loaded, showing ' + preview_id);
+            _debug('loaded, showing ' + preview_id);
             $(preview_id).show();
         });
     }
@@ -55,7 +55,7 @@ function setup_ri_field ( source_type, source_id, field_name, preview_switch_id,
         if (toids[field_name]) {
             clearTimeout(toids[field_name]);
         }
-		var args = [source_type, source_id, field_name, preview_id, type, blog_id, this.value, count];
+        var args = [source_type, source_id, field_name, preview_id, type, blog_id, this.value, count];
         toids[field_name] = setTimeout('get_preview(\''+args.join('\',\'')+'\')', 750);
     });
 }

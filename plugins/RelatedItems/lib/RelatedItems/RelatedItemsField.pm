@@ -42,8 +42,8 @@ HTML
         $html .= <<"HTML";
 <script type="text/javascript">
 \$(function(){
-	var source_type = "$source_type";
-	var source_id = "$source_id";
+    var source_type = "$source_type";
+    var source_id = "$source_id";
     var field_name = '<mt:var name="field_name">';
     var preview_switch_id = '#ri_' + field_name + '_show_preview';
     var preview_id = '#ri_' + field_name + '_preview';
