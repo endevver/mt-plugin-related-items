@@ -1,10 +1,11 @@
 # Related Items Overview
 
-Related Items provides a custom field that allows users to relate the current object to any Taggable object. Said differently, with this custom field you can relate a system object (Entry, Page, Category, Folder, or User) to Taggable objects: assets, entries, and pages.
+Related Items provides a custom field type that allows users to relate the current object to any Taggable object. Said differently, with this custom field you can relate a system object (Entry, Page, Category, Folder, or User) to Taggable objects: assets, entries, and pages.
 
-After creating a Related Items custom field, a tag or tags can be entered in the field. The resulting matches are displayed in a "preview" area to help ensure the correct tag or tags were entered.
+For example, a Related Items custom field configured to relate Assets to Pages would allow the published Page to display related Assets.
 
-For example, a site may want to link a documentation page to blog posts that are related to the subject being documented. With a Related Items custom field on Pages, configured to relate Entries, the Page template can load related blog posts and render the list along with the Page content. Another Related Items custom field configured to relate Assets (files) would allow the Page template to load related Assets and display them.
+Use the Related Items custom field by entering a tag or tags in the field. The resulting matches are displayed in a "preview" area to help ensure the correct match was found.
+
 
 ## Prerequisites
 
@@ -27,46 +28,39 @@ The **Show a Preview** option is enabled by default and will display tag matches
 
 ## Use
 
-### Add a new Related Items field
-
 Create a Related Items custom field as you would any other custom field:
 
 * Go to Preferences > Custom Fields in your blog or from the system overview (fields defined at the System level will be available to all blogs).
 * Click "New field"
-* Related Items Tags" Custom field in the blog or at the System level
-* Set the **System Object** for the field (Entry, Page, etc). This is the type of object you want the target items to be related to.
-* Give the field a **Name** (ie: "Documentation Pages") and optionally a **Description**
-* Set the **Type** of the field to "Related Items Tags"
-* Set **Relate Items of Type** to the type of objects that will be related through this field (entry, page, etc)
-* If this will be a required field, set **Required**. 
-* Give the field a **Basename** (ie: "related_documentation_pages"). This is important (as well as required) as this is the name you will use to tell the template tag which field to draw related items based on.
-* Give the field a **Template Tag** name (ie: "EntryDocumentationPages")
-* Save the field
+* Set the *System Object* for the field (Entry, Page, etc). This is the type of object you want the target items to be related to.
+* Give the field a *Name* (ie: "Documentation Pages") and optionally a *Description.*
+* Set the *Type* of the field to "Related Items Tags."
+* Set *Relate Items of Type* to the type of objects that will be related through this field (entry, page, etc).
+* If this will be a required field, set *Required*.
+* Note the field *basename* and *template tag* for later use.
+* Save the field.
 
 On the Edit Entry (or Edit Page) screen:
 
-* Under **Display Options**, select "Documentation Pages" to display the field
-* Enter some tags in the field.
-* Save the entry
+* In the upper-right select *Display Options,* select your new Related Items field to make the field visible.
+* Enter some tags in the field and see the preview appear.
+* Save the entry.
 
 ## Template Tags
 
-Related Items provides one template tag, the block tag **RelatedItems**. This tag creates on object loop of the related items, and provides the normal meta loop variables as well (\_\_first\_\_, \_\_last\_\_, \_\_even\_\_, \_\_odd\_\_, \_\_counter\_\_). The tags has one required argument: `basename`. This should be set to the basename of the field you want to list related items for. Additionally the tag accepts both `blog_id` and `lastn` arguments. Setting `blog_id` will tell the tag to pull related items from a different blog from the one currently in context. Setting `lastn` will limit the returned results to this number. By default, the tag will return the number set in the plugin settings (defaults to 5).
+Related Items provides one template tag, the block tag `RelatedItems`. This tag creates on object loop of the related items, and provides the normal meta loop variables as well (`__first__`, `__last__`, `__even__`, `__odd__`, `__counter__`). The tags has one required argument: `basename`. This should be set to the basename of the field you want to list related items for. Additionally the tag accepts both `blog_id` and `lastn` arguments. Setting `blog_id` will tell the tag to pull related items from a different blog from the one currently in context. Setting `lastn` will limit the returned results to this number. By default, the tag will return the number set in the plugin settings (defaults to 5).
 
 ### Example
 
-In the Entry archive template, or Entry Summary template, add template code to list the related objects:
+In this example, a Related Items field was created for Entries, relating to Assets. The tag `EntryDataRelatedAssets` and the basename `entry_data_related_assets` was created for this field. In the entry template this code could be used to generate a list of Assets related to the Entry:
 
-    <mt:ifnonempty name="EntryDocumentationPages"> <!-- checks for tags in the field -->
+    <mt:IfNonEmpty tag="EntryDataRelatedAssets">
         <ul>
-        <mt:RelatedItems 
-            basename="related_documentation_pages"
-            lastn="3"
-            blog_id="3">
-            <li><a href="<mt:PagePermalink />"><mt:PageTitle /></a></li>
+        <mt:RelatedItems basename="entry_data_related_assets">
+            <li><a href="<mt:AssetURL>"><mt:AssetLabel></a></li>
         </mt:RelatedItems
         </ul>
-    </mt:ifnonempty>
+    </mt:IfNonEmpty>
 
 ## Acknowledgements
 
