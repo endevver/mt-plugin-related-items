@@ -3,7 +3,7 @@ id: RelatedItems
 description: 'Provide an easy, tag-based UI that allows users to see/select entries or assets that are related to the current entry.'
 author_name: 'Endevver, LLC'
 author_link: http://endevver.com
-version: 0.4
+version: 1.0
 schema_version: 3
 static_version: 21
 
