@@ -26,6 +26,8 @@ The **Show a Preview** option is enabled by default and will display tag matches
 
 **Related Items Count** is the number of items returned in the preview area. Use this setting to ensure you don't accidentally grab thousands of items, for example. (The total number of found items is shown in the preview area if it exceeds the Count value set here.)
 
+If you want to use a Related Items field in your theme, specify `related_items_tags` as the "type" in the field definition.
+
 ## Use
 
 Create a Related Items custom field as you would any other custom field:
