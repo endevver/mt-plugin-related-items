@@ -5,7 +5,7 @@ author_name: 'Endevver, LLC'
 author_link: http://endevver.com
 version: 0.4
 schema_version: 3
-static_version: 20
+static_version: 21
 
 customfield_types: $RelatedItems::RelatedItems::Plugin::load_customfield_types
 

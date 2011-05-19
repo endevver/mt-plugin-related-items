@@ -27,7 +27,7 @@ function get_preview (source_type, source_id, field_name, preview_id, type, blog
     if (tags) {
         var val = tags;
         // normalize the tags value
-        var tags = val.split(',').map(function(str){ return $.trim(str)})
+        var tags = val.split(/\s*,\s*/).map(function(str){ return str.replace(' ','') })
         tagsstr = tags.join(',');
 
         // Craft the AJAX request URL. blog_id and type are set in the page
